@@ -54,3 +54,8 @@ a:hover {
     background: blue;
     transition: left top;
 }
+.world .block {
+    position: absolute;
+    background: green;
+    border: solid black 1px;
+}

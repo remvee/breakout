@@ -5,12 +5,38 @@
 
 (def paddle-sensitivity 500)
 
+(def block-columns 10)
+(def block-rows 10)
+
 (def new-world {:paddle {:x .5, :width .1}
                 :ball   {:x .525, :y 0.97, :dx 0, :dy .02, :speed .02, :on-paddle true}
-                :blocks (repeat 10 (repeat 10 :red))
+                :blocks (into [] (repeat 5 (into [] (repeat 10 :red))))
                 :lives  3})
 
 (def world-atom (r/atom new-world))
+
+(defn block->pos [row column]
+  (let [width  (/ 1 block-columns)
+        height (/ 1 block-rows)]
+    [(+ (* column width) .005)
+     (+ (* row height) .005)
+     (- (* (inc column) width) .01)
+     (- (* (inc row) height) .01)]))
+
+(defn pos->block [x y]
+  (let [width  (/ 1 block-columns)
+        height (/ 1 block-rows)]
+    (loop [row 0]
+      (when (< row block-rows)
+        (if-let [result (loop [column 0]
+                          (when (< column block-columns)
+                            (let [[x1 y1 x2 y2] (block->pos row column)]
+                              (if (and (<= x1 x x2)
+                                       (<= y1 y y2))
+                                [row column]
+                                (recur (inc column))))))]
+          result
+          (recur (inc row)))))))
 
 (defn game-over? [{:keys [lives]}]
   (<= lives 0))
@@ -82,10 +108,18 @@
       :else
       world)))
 
-(defn bounce-ball [{{:keys [x y dx dy]} :ball :as world}]
+(defn bounce-ball-blocks [{:keys         [blocks]
+                           {:keys [x y]} :ball, :as world}]
+  (let [coor (pos->block x y)]
+    (if-let [block (and coor (get-in blocks coor))]
+      (assoc-in world (into [:blocks] coor) nil)
+      world)))
+
+(defn bounce-ball [world]
   (-> world
       bounce-ball-walls
-      bounce-ball-paddle))
+      bounce-ball-paddle
+      bounce-ball-blocks))
 
 (defn tick [world]
   (if (game-over? world)
@@ -103,6 +137,22 @@
 ;; -------------------------
 ;; Views
 
+(defn pos-style [x y width height]
+  {:left (str (-> x (* 100) (- (/ width 2))) "%")
+   :top  (str (-> y (* 100) (- (/ height 2))) "%")})
+
+(defn render-ball [{:keys [x y]}]
+  [:div.ball {:style (into {:width "2%", :height "2%"} (pos-style x y 2 2))}])
+
+(defn render-block [row column block]
+  (let [[x1 y1 x2 y2] (block->pos row column)]
+    [:div.block {:key   (str "b" row "-" column)
+                 :style {:left   (str (* x1 100) "%")
+                         :top    (str (* y1 100) "%")
+                         :right  (str (- 100 (* x2 100)) "%")
+                         :bottom (str (- 100 (* y2 100)) "%")}}
+     block]))
+
 (defn render-world []
   (let [world                              @world-atom
         {:keys [paddle ball blocks lives]} world]
@@ -111,9 +161,11 @@
      (when (game-over? world)
        [:h2.game-over [:a {:onClick new-game!} "GAME OVER!"]])
 
-     (when (< (:y ball) 1)
-       [:div.ball {:style {:left (str (-> ball :x (* 100) (- 1)) "%")
-                           :top  (str (-> ball :y (* 100) (- 1)) "%")}}])
+     (for [[i row] (map-indexed vector blocks)]
+       (for [[j block] (map-indexed vector row)]
+         (when block (render-block i j block))))
+
+     (render-ball ball)
      [:div.paddle {:style {:width (str (-> paddle :width (* 100)) "%")
                            :left  (str (-> paddle :x (- (-> paddle :width (/ 2))) (* 100)) "%")}}]]))
 
