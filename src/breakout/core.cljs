@@ -10,18 +10,23 @@
 
 (def new-world {:paddle {:x .5, :width .1}
                 :ball   {:x .525, :y 0.97, :dx 0, :dy .02, :speed .02, :on-paddle true}
-                :blocks (into [] (repeat 5 (into [] (repeat 10 :red))))
+                :blocks [[nil nil nil nil nil nil nil nil nil nil]
+                         [nil :x :x :x :x :x :x :x :x nil]
+                         [nil :x :x :x :x :x :x :x :x nil]
+                         [nil :x :x :x :x :x :x :x :x nil]
+                         [nil :x :x :x :x :x :x :x :x nil]
+                         [nil :x :x :x :x :x :x :x :x nil]]
                 :lives  3})
 
 (def world-atom (r/atom new-world))
 
-(defn block->pos [row column]
+(defn block->pos [[row column]]
   (let [width  (/ 1 block-columns)
         height (/ 1 block-rows)]
     [(+ (* column width) .005)
      (+ (* row height) .005)
-     (- (* (inc column) width) .01)
-     (- (* (inc row) height) .01)]))
+     (- (* (inc column) width) .005)
+     (- (* (inc row) height) .005)]))
 
 (defn pos->block [x y]
   (let [width  (/ 1 block-columns)
@@ -30,7 +35,7 @@
       (when (< row block-rows)
         (if-let [result (loop [column 0]
                           (when (< column block-columns)
-                            (let [[x1 y1 x2 y2] (block->pos row column)]
+                            (let [[x1 y1 x2 y2] (block->pos [row column])]
                               (if (and (<= x1 x x2)
                                        (<= y1 y y2))
                                 [row column]
@@ -68,10 +73,10 @@
 
 (defn bounce-ball-walls [{{:keys [x y dx dy]} :ball :as world}]
   (-> world
-      (assoc-in [:ball :dx] (if (or (= x 0) (= x 1))
+      (assoc-in [:ball :dx] (if (or (zero? x) (= x 1))
                               (* -1 dx)
                               dx))
-      (assoc-in [:ball :dy] (if (or (= y 0) #_(= y 1))
+      (assoc-in [:ball :dy] (if (or (zero? y))
                               (* -1 dy)
                               dy))))
 
@@ -112,7 +117,13 @@
                            {:keys [x y]} :ball, :as world}]
   (let [coor (pos->block x y)]
     (if-let [block (and coor (get-in blocks coor))]
-      (assoc-in world (into [:blocks] coor) nil)
+      (let [[x1 y1 x2 y2] (block->pos coor)
+            dist          (fn [a b] (- (max a b) (min a b)))
+            dist-x        (min (dist x x1) (dist x x2))
+            dist-y        (min (dist y y1) (dist y y2))]
+        (-> world
+            (assoc-in (into [:blocks] coor) nil)
+            (update-in [:ball (if (<= dist-x dist-y) :dx :dy)] * -1)))
       world)))
 
 (defn bounce-ball [world]
@@ -145,29 +156,31 @@
   [:div.ball {:style (into {:width "2%", :height "2%"} (pos-style x y 2 2))}])
 
 (defn render-block [row column block]
-  (let [[x1 y1 x2 y2] (block->pos row column)]
+  (let [[x1 y1 x2 y2] (block->pos [row column])]
     [:div.block {:key   (str "b" row "-" column)
                  :style {:left   (str (* x1 100) "%")
                          :top    (str (* y1 100) "%")
                          :right  (str (- 100 (* x2 100)) "%")
                          :bottom (str (- 100 (* y2 100)) "%")}}
-     block]))
+     " "]))
 
 (defn render-world []
   (let [world                              @world-atom
         {:keys [paddle ball blocks lives]} world]
-    [:div.world {:class (when (game-over? world) "game-over")}
+    [:div.world
      [:div.lives (str lives)]
-     (when (game-over? world)
-       [:h2.game-over [:a {:onClick new-game!} "GAME OVER!"]])
+
+     (render-ball ball)
 
      (for [[i row] (map-indexed vector blocks)]
        (for [[j block] (map-indexed vector row)]
          (when block (render-block i j block))))
 
-     (render-ball ball)
      [:div.paddle {:style {:width (str (-> paddle :width (* 100)) "%")
-                           :left  (str (-> paddle :x (- (-> paddle :width (/ 2))) (* 100)) "%")}}]]))
+                           :left  (str (-> paddle :x (- (-> paddle :width (/ 2))) (* 100)) "%")}}]
+
+     (when (game-over? world)
+       [:h2.game-over [:a {:onClick new-game!} "GAME OVER!"]])]))
 
 (defn home-page []
   [:main [:h1 "Breakout!"]

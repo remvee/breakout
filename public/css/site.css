@@ -33,10 +33,37 @@ a:hover {
   text-decoration: underline;
 }
 
+.game {
+    position: relative;
+}
+
+.game-over {
+    position: absolute;
+    width: 100%;
+    text-align: center;
+    background: rgba(255, 255, 0, 0.8);
+    top: calc(50% - 3em);
+}
+
+.game-over a {
+    width: 100%;
+    color: black;
+    padding: 1em 0;
+    display: block;
+}
+
+.lives {
+    position: absolute;
+    top: -2em;
+    right: 0;
+}
+
 .world {
     position: relative;
     width: 50vw;
+    max-width: 80vh;
     height: 50vw;
+    max-height: 80vh;
     border: black 1px solid;
     border-bottom: none;
 }
@@ -53,6 +80,7 @@ a:hover {
     height: 2%;
     background: blue;
     transition: left top;
+    border-radius: 50%;
 }
 .world .block {
     position: absolute;
