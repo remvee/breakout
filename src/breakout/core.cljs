@@ -4,9 +4,6 @@
             [goog.events.EventType :as event-type]
             [reagent.core :as r]))
 
-;; Sensitivity of the paddle to mouse/touch movement, smaller number is more sensitive.
-(def paddle-sensitivity 500)
-
 ;; Number of blocks in the game.
 (def block-columns 10)
 (def block-rows 10)
@@ -74,12 +71,11 @@
   (<= lives 0))
 
 (defn move-paddle
-  "Move paddle according to delta-pixels movement."
-  [{{:keys [x width]} :paddle :as world} delta-pixels]
+  "Move paddle."
+  [{{:keys [x width]} :paddle :as world} dx]
   (if (game-over? world)
     world
-    (let [dx        (/ delta-pixels paddle-sensitivity)
-          new-x     (- x dx)
+    (let [new-x     (- x dx)
           bump      (/ width 2)
           new-x     (-> new-x (max bump) (min (- 1 bump)))
           dx        (- new-x x)
@@ -198,14 +194,22 @@
 (defn new-game! []
   (reset! world-atom new-world))
 
-(let [previous-mouse-x-atom (atom nil)]
+(let [previous-mouse-x-atom (atom nil)
+      paddle-sensitivity {"mousemove" 500
+                          "touchmove" 250}]
   (defn move-paddle!
     "Handle mouse/touch move events."
     [e]
     (let [x (.-screenX e)]
       (when-let [previous-mouse-x @previous-mouse-x-atom]
-        (swap! world-atom move-paddle (- previous-mouse-x x)))
-      (reset! previous-mouse-x-atom x))))
+        (when-let [sensitivity (paddle-sensitivity (.-type e))]
+          (let [dx (/ (- previous-mouse-x x) sensitivity)]
+            (swap! world-atom move-paddle dx))))
+      (reset! previous-mouse-x-atom x)))
+
+  (defn touchend-paddle!
+    [e]
+    (reset! previous-mouse-x-atom nil)))
 
 (defn tap-paddle!
   "Handle mouse/touch click events."
@@ -237,20 +241,21 @@
   []
   (let [world                              @world-atom
         {:keys [paddle ball blocks lives]} world]
-    [:div.world
-     [:div.lives (repeat lives [:span.live "🖤"])]
+    [:div.game
+     [:div.lives (repeat lives "🖤")]
 
-     (render-ball ball)
+     [:div.world
+      (render-ball ball)
 
-     (for [[i row] (map-indexed vector blocks)]
-       (for [[j block] (map-indexed vector row)]
-         (when block (render-block i j block))))
+      (for [[i row] (map-indexed vector blocks)]
+        (for [[j block] (map-indexed vector row)]
+          (when block (render-block i j block))))
 
-     [:div.paddle {:style {:width (str (-> paddle :width (* 100)) "%")
-                           :left  (str (-> paddle :x (- (-> paddle :width (/ 2))) (* 100)) "%")}}]
+      [:div.paddle {:style {:width (str (-> paddle :width (* 100)) "%")
+                            :left  (str (-> paddle :x (- (-> paddle :width (/ 2))) (* 100)) "%")}}]
 
-     (when (game-over? world)
-       [:h2.game-over [:a {:onClick new-game!} "GAME OVER!"]])]))
+      (when (game-over? world)
+        [:h2.game-over [:a {:onClick new-game!} "GAME OVER!"]])]]))
 
 (defn render-main []
   [:main [:h1 "Breakout!"]
@@ -265,6 +270,7 @@
 
 (defn init! []
   (events/listen js/document (to-array [event-type/MOUSEMOVE event-type/TOUCHMOVE]) move-paddle!)
+  (events/listen js/document event-type/TOUCHEND touchend-paddle!)
   (events/listen js/document (to-array [event-type/CLICK event-type/TOUCHSTART]) tap-paddle!)
   (js/setInterval tick! 25)
   (mount-root))

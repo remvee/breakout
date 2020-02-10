@@ -1,38 +1,29 @@
+:root {
+    --world-size: 600px;
+}
+
+@media (max-width: 600px) {
+    :root {
+        --world-size: 360px;
+    }
+}
+
+@media (max-width: 360px) {
+    :root {
+        --world-size: 360px;
+    }
+}
+
 body {
   font-family: 'Helvetica Neue', Verdana, Helvetica, Arial, sans-serif;
-  max-width: 600px;
+  max-width: var(--world-size);
   margin: 0 auto;
-  padding-top: 72px;
-  -webkit-font-smoothing: antialiased;
-  font-size: 1.125em;
-  color: #333;
-  line-height: 1.5em;
+  background: #eee;
 }
 
-h1, h2, h3 {
-  color: #000;
-}
 h1 {
-  font-size: 2.5em
+    margin: 1em 0 0 0;
 }
-
-h2 {
-  font-size: 2em
-}
-
-h3 {
-  font-size: 1.5em
-}
-
-a {
-  text-decoration: none;
-  color: #09f;
-}
-
-a:hover {
-  text-decoration: underline;
-}
-
 .game {
     position: relative;
 }
@@ -60,12 +51,12 @@ a:hover {
 
 .world {
     position: relative;
-    width: 50vw;
-    max-width: 80vh;
-    height: 50vw;
-    max-height: 80vh;
-    border: black 1px solid;
+    width: var(--world-size);
+    height: var(--world-size);
     border-bottom: none;
+    background: white;
+    overflow-x: hidden;
+    overflow-y: hidden;
 }
 .world .paddle, .world .ball {
     position: absolute;
