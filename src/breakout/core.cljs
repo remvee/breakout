@@ -18,6 +18,9 @@
 (def ball-size 2)
 (def ball-on-paddle-y (- 1 (/ (* 1.5 ball-size) 100)))
 
+;; Block margins, gap size between blocks.
+(def block-margin .002)
+
 ;; Start of game state.
 (def new-world {:paddle {:x .5, :width .1}
                 :ball   {:x .525, :y ball-on-paddle-y, :dx 0, :dy 0, :speed .02, :on-paddle true}
@@ -41,23 +44,27 @@
   [[row column]]
   (let [width  (/ 1 block-columns)
         height (/ 1 block-rows)]
-    [(+ (* column width) .005)
-     (+ (* row height) .005)
-     (- (* (inc column) width) .005)
-     (- (* (inc row) height) .005)]))
+    [(+ (* column width) block-margin)
+     (+ (* row height) block-margin)
+     (- (* (inc column) width) block-margin)
+     (- (* (inc row) height) block-margin)]))
 
 (defn pos->block
   "Get block row/column for given coordinates."
-  [x y]
-  (let [width  (/ 1 block-columns)
-        height (/ 1 block-rows)]
+  [blocks x y]
+  (let [bump    (/ ball-size 200)
+        ball-x1 (- x bump)
+        ball-y1 (- y bump)
+        ball-x2 (+ x bump)
+        ball-y2 (+ y bump)]
     (loop [row 0]
       (when (< row block-rows)
         (if-let [result (loop [column 0]
                           (when (< column block-columns)
                             (let [[x1 y1 x2 y2] (block->pos [row column])]
-                              (if (and (<= x1 x x2)
-                                       (<= y1 y y2))
+                              (if (and (get-in blocks [row column])
+                                       (or (<= x1 ball-x1 x2)  (<= x1 ball-x2 x2))
+                                       (or (<= y1 ball-y1 y2) (<= y1 ball-y2 y2)))
                                 [row column]
                                 (recur (inc column))))))]
           result
@@ -139,7 +146,7 @@
   "Bounce ball off blocks and kill blocks when hit."
   [{:keys         [blocks]
     {:keys [x y]} :ball, :as world}]
-  (let [coor (pos->block x y)]
+  (let [coor (pos->block blocks x y)]
     (if-let [block (and coor (get-in blocks coor))]
       (let [[x1 y1 x2 y2] (block->pos coor)
             dist          (fn [a b] (- (max a b) (min a b)))
