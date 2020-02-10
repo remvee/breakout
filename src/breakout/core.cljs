@@ -104,10 +104,11 @@
   "Bounce ball when hitting a wall."
   [{{:keys [x y dx dy]} :ball :as world}]
   (-> world
-      (assoc-in [:ball :dx] (if (or (zero? x) (= x 1))
+      (assoc-in [:ball :dx] (if (or (<= x (/ ball-size 200))
+                                    (>= x (- 1 (/ ball-size 200))))
                               (* -1 dx)
                               dx))
-      (assoc-in [:ball :dy] (if (or (zero? y))
+      (assoc-in [:ball :dy] (if (<= y (/ ball-size 200))
                               (* -1 dy)
                               dy))))
 
