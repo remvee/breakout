@@ -238,7 +238,7 @@
   (let [world                              @world-atom
         {:keys [paddle ball blocks lives]} world]
     [:div.world
-     [:div.lives (str lives)]
+     [:div.lives (repeat lives [:span.live "🖤"])]
 
      (render-ball ball)
 
