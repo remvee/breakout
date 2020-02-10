@@ -1,12 +1,12 @@
 (defproject breakout "0.1.0-SNAPSHOT"
-  :description "FIXME: write description"
-  :url "http://example.com/FIXME"
+  :description "Yay!  Breakout!"
   :license {:name "Eclipse Public License"
-            :url "http://www.eclipse.org/legal/epl-v10.html"}
+            :url  "http://www.eclipse.org/legal/epl-v10.html"}
+  :url "https://github.com/remvee/breakout"
 
   :dependencies [[org.clojure/clojure "1.10.1"]
                  [org.clojure/clojurescript "1.10.597"]
-                 [reagent "0.9.0-rc3"]]
+                 [reagent "0.9.1"]]
 
   :plugins [[lein-cljsbuild "1.1.7"]
             [lein-figwheel "0.5.19"]]
@@ -49,7 +49,7 @@
   :aliases {"package" ["do" "clean" ["cljsbuild" "once" "release"]]}
 
   :profiles {:dev {:source-paths ["src" "env/dev/clj"]
-                   :dependencies [[binaryage/devtools "0.9.11"]
+                   :dependencies [[binaryage/devtools "1.0.0"]
                                   [figwheel-sidecar "0.5.19"]
                                   [nrepl "0.6.0"]
                                   [cider/piggieback "0.4.2"]]}})

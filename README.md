@@ -1,22 +1,18 @@
+# Breakout!
 
-### Development mode
-To start the Figwheel compiler, navigate to the project folder and run the following command in the terminal:
+## Usage
 
-```
-lein figwheel
-```
+Build it:
 
-Figwheel will automatically push cljs changes to the browser.
-Once Figwheel starts up, you should be able to open the `public/index.html` page in the browser.
+    lein package
 
-### REPL
+Play it:
 
-The project is setup to start nREPL on port `7002` once Figwheel starts.
-Once you connect to the nREPL, run `(cljs)` to switch to the ClojureScript REPL.
+    open public/index.html
 
-### Building for production
+## License
 
-```
-lein clean
-lein package
-```
+Copyright © 2020 R.W. van 't Veer
+
+Distributed under the Eclipse Public License either version 1.0 or (at
+your option) any later version.
