@@ -1,0 +1,80 @@
+:root {
+    --world-size: 600px;
+}
+
+@media (max-width: 600px) {
+    :root {
+        --world-size: 360px;
+    }
+}
+
+@media (max-width: 360px) {
+    :root {
+        --world-size: 360px;
+    }
+}
+
+body {
+  font-family: 'Helvetica Neue', Verdana, Helvetica, Arial, sans-serif;
+  max-width: var(--world-size);
+  margin: 0 auto;
+  background: #eee;
+}
+
+h1 {
+    margin: 1em 0 0 0;
+}
+.game {
+    position: relative;
+}
+
+.game-over {
+    position: absolute;
+    width: 100%;
+    text-align: center;
+    background: rgba(255, 255, 0, 0.8);
+    top: calc(50% - 3em);
+}
+
+.game-over a {
+    width: 100%;
+    color: black;
+    padding: 1em 0;
+    display: block;
+}
+
+.lives {
+    position: absolute;
+    top: -2em;
+    right: 0;
+}
+
+.world {
+    position: relative;
+    width: var(--world-size);
+    height: var(--world-size);
+    border-bottom: none;
+    background: white;
+    overflow-x: hidden;
+    overflow-y: hidden;
+}
+.world .paddle, .world .ball {
+    position: absolute;
+}
+.world .paddle {
+    height: 2%;
+    bottom: 0;
+    background: red;
+}
+.world .ball {
+    width: 2%;
+    height: 2%;
+    background: blue;
+    transition: left top;
+    border-radius: 50%;
+}
+.world .block {
+    position: absolute;
+    background: green;
+    border: solid black 1px;
+}
